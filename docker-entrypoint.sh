@@ -32,7 +32,7 @@ done
 # This function ensures the Seat Version footer is 
 # always up to date and matches what is deployed.
 SEAT_STORAGE="/var/www/seat/storage"
-IMAGE_VERSION="/tmp/seat-version"
+IMAGE_VERSION="/var/www/seat/version"
 VOLUME_VERSION="${SEAT_STORAGE}/version"
 
 function initialize_seat_version() {

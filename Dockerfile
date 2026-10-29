@@ -1,15 +1,22 @@
 FROM php:8.4-alpine AS seat-core
 
 # Composer
+#
+# Composer >= 2.11 refuses to install packages affected by known security
+# advisories by default. SeAT 5.x still depends on Laravel 10 (EOL), so the
+# block is disabled to keep the build working.
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin \
-    --filename=composer && hash -r
+    --filename=composer && hash -r \
+    && composer config -g policy.advisories.block false
 
 # Create SeAT package with its dependencies
+COPY version /tmp/seat-version
 RUN composer create-project eveseat/seat:^5.0 --stability dev --no-scripts --no-dev --no-ansi --no-progress --ignore-platform-reqs && \
     composer clear-cache --no-ansi && \
     # Setup the default configuration file \
     cd seat && \
-    php -r "file_exists('.env') || copy('.env.example', '.env');" 
+    php -r "file_exists('.env') || copy('.env.example', '.env');" && \
+    cp /tmp/seat-version /seat/version
 
 FROM php:8.4-apache-bookworm AS seat
 
@@ -67,8 +74,6 @@ RUN chown -R seat:seat /var/www/seat
 # Expose only the public directory to Apache
 RUN rmdir /var/www/html && \
     ln -s /var/www/seat/public /var/www/html
-
-COPY version /tmp/seat-version
 
 WORKDIR /var/www/seat
 
